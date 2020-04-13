@@ -228,6 +228,8 @@ void syscallExec(struct TrapFrame *tf) {
 
 void syscallSleep(struct TrapFrame *tf) {
 	// TODO in lab3
+    if(tf->ecx<0)
+        return;
     pcb[current].sleepTime = tf->ecx;
     pcb[current].state = STATE_BLOCKED;
     asm volatile("int $0x20");
@@ -236,6 +238,8 @@ void syscallSleep(struct TrapFrame *tf) {
 
 void syscallExit(struct TrapFrame *tf) {
 	// TODO in lab3
+    pcb[current].state = STATE_DEAD;
+    asm volatile("int $0x20");
 	return;
 }
 
