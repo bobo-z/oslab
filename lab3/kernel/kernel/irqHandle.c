@@ -183,10 +183,40 @@ void syscallPrint(struct TrapFrame *tf) {
 	
 	updateCursor(displayRow, displayCol);
 	//TODO take care of return value
-}
+
 
 void syscallFork(struct TrapFrame *tf) {
 	// TODO in lab3
+    int i,j;
+    for(i = 0;i<MAX_PCB_NUM;i++)
+        if(pcb[i].state==STATE_DEAD)
+            break;
+    if(i!=MAX_PCB_NUM)
+    {
+        for(j=0;j<0x100000;j++)
+        {
+            *(uint8_t)(j+(i+1)*0x100000)=*(uint8_t)(j+(current+1)*0x100000);
+        }
+        pcb[i].stackTop = (uint32_t)&(pcb[i].regs);
+        pcb[i].prevStackTop = (uint32_t)&(pcb[i].stackTop);
+        pcb[i].state = STATE_RUNNABLE;
+        pcb[i].timeCount = 0;
+        pcb[i].sleepTime = 0;
+        pcb[i].pid = i;
+        pcb[i].regs = pcb[current].regs;
+        pcb[i].regs.ss = USEL(i*2 + 2);
+        pcb[i].regs.cs = USEL(i*2 + 1);
+        pcb[i].regs.gs = USEL(i*2 + 2);
+        pcb[i].regs.fs = USEL(i*2 + 2);
+        pcb[i].regs.es = USEL(i*2 + 2);
+        pcb[i].regs.ds = USEL(i*2 + 2);
+        for(int k = 0;k<MAX_STACK_SIZE;k++)
+            pcb[i].stack[k] = pcb[current].stack[k];
+        pcb[i].regs.eax = 0;
+        pcb[current].regs.eax = i;
+    }
+    else
+        pch[current].regs.eax = -1;
 	return;
 }
 
