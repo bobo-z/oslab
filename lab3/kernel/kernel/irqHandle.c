@@ -80,6 +80,48 @@ void syscallHandle(struct TrapFrame *tf) {
 
 void timerHandle(struct TrapFrame *tf) {
 	// TODO in lab3
+    for(int i=0;i<MAX_PCB_NUM;i++)
+    {
+        if(pcb[i].state==STATE_BLOCKED)
+        {   
+            pcb[i].sleeptime--;
+            if(pcb[i].sleeptime<0)
+                    pcb[i].state=STATE_RUNNABLE;
+        }
+    }
+    pcb[i].timeCount++;
+    if(pcb[i].timeCount > MAX_TIME_COUNT)
+    {
+        pcb[current].state = RUNNABLE;
+        int next_runnable = (current + 1)%MAX_PCB_NUM;
+        while(1)
+        {
+            if(pcb[next_runnable].state == RUNNABLE)
+            {
+                pcb[next_runnable].state == RUNNING;
+                pcb[next_runnable].timecount == 0;
+                break;
+            }
+            next_runnable = (next_runnable+1)%MAX_PCB_NUM;
+        }
+        if(next_runnable == current)
+        {
+            return;
+        }
+        current = next_runnable;
+        tmpStackTop = pcb[current].stackTop;
+        pcb[current].stackTop = pck[current].prevStackTop;
+        tss.esp0 = (uint32_t)&(pcb[current].stackTop);
+        asm volatile("movl %0, %%esp"::"m"(tmpStackTop)); // switch kernel stack
+        asm volatile("popl %gs");
+        asm volatile("popl %fs");
+        asm volatile("popl %es");
+        asm volatile("popl %ds");
+        asm volatile("popal");
+        asm volatile("addl $8, %esp");
+        asm volatile("iret");
+    }
+
 	return;
 }
 
