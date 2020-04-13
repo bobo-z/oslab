@@ -216,7 +216,7 @@ void syscallFork(struct TrapFrame *tf) {
         pcb[current].regs.eax = i;
     }
     else
-        pch[current].regs.eax = -1;
+        pcb[current].regs.eax = -1;
 	return;
 }
 
@@ -228,6 +228,9 @@ void syscallExec(struct TrapFrame *tf) {
 
 void syscallSleep(struct TrapFrame *tf) {
 	// TODO in lab3
+    pcb[current].sleepTime = tf->ecx;
+    pcb[current].state = STATE_BLOCKED;
+    asm volatile("int $0x20");
 	return;
 }
 
