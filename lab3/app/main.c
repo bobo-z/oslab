@@ -6,6 +6,7 @@ int data = 0;
 int uEntry(void) {
 	int ret = fork();
 	int i = 8;
+    //printf("ret ==%d\n",ret);
 	if (ret == 0) {
 		data = 2;
 		while(i != 0) {

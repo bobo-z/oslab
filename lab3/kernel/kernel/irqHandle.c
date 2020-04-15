@@ -89,26 +89,23 @@ void timerHandle(struct TrapFrame *tf) {
                     pcb[i].state=STATE_RUNNABLE;
         }
     }
+
     pcb[current].timeCount++;
     if(pcb[current].timeCount > MAX_TIME_COUNT)
     {
         pcb[current].state = STATE_RUNNABLE;
+        pcb[current].timeCount = 0;
+
         int next_runnable = (current + 1)%MAX_PCB_NUM;
-        while(1)
+        while(next_runnable != current)
         {
             if(pcb[next_runnable].state == STATE_RUNNABLE)
-            {
-                pcb[next_runnable].state = STATE_RUNNING;
-                pcb[next_runnable].timeCount = 0;
                 break;
-            }
             next_runnable = (next_runnable+1)%MAX_PCB_NUM;
         }
-        if(next_runnable == current)
-        {
-            return;
-        }
         current = next_runnable;
+        pcb[current].state = STATE_RUNNING;
+        pcb[current].timeCount = 0;
         uint32_t tmpStackTop = pcb[current].stackTop;
         pcb[current].stackTop = pcb[current].prevStackTop;
         tss.esp0 = (uint32_t)&(pcb[current].stackTop);
@@ -203,30 +200,63 @@ void syscallFork(struct TrapFrame *tf) {
         pcb[i].state = STATE_RUNNABLE;
         pcb[i].timeCount = 0;
         pcb[i].sleepTime = 0;
-        pcb[i].pid = i;
-        pcb[i].regs = pcb[current].regs;
+        pcb[i].pid = (uint32_t) i;
+        //pcb[i].regs = pcb[current].regs;
+
+        //set stack
+        for(int k = 0;k<MAX_STACK_SIZE;k++)           
+        {
+            pcb[i].stack[k] = pcb[current].stack[k];
+        }
+        //set regs
         pcb[i].regs.ss = USEL(i*2 + 2);
         pcb[i].regs.cs = USEL(i*2 + 1);
         pcb[i].regs.gs = USEL(i*2 + 2);
         pcb[i].regs.fs = USEL(i*2 + 2);
         pcb[i].regs.es = USEL(i*2 + 2);
         pcb[i].regs.ds = USEL(i*2 + 2);
-        for(int k = 0;k<MAX_STACK_SIZE;k++)
-            pcb[i].stack[k] = pcb[current].stack[k];
+
+        pcb[i].regs.edi = pcb[current].regs.edi;
+        pcb[i].regs.esi = pcb[current].regs.esi;
+        pcb[i].regs.ebp = pcb[current].regs.ebp;
+        pcb[i].regs.xxx = pcb[current].regs.xxx;
+        pcb[i].regs.ebx = pcb[current].regs.ebx;
+        pcb[i].regs.edx = pcb[current].regs.edx;
+        pcb[i].regs.ecx = pcb[current].regs.ecx;
+        pcb[i].regs.irq = pcb[current].regs.irq;
+        pcb[i].regs.error = pcb[current].regs.error;
+        pcb[i].regs.eip = pcb[current].regs.eip;
+        pcb[i].regs.esp = pcb[current].regs.esp;
+        pcb[i].regs.eflags = pcb[current].regs.eflags;
+        //return value
         pcb[i].regs.eax = 0;
         pcb[current].regs.eax = i;
     }
     else
+    {
         pcb[current].regs.eax = -1;
+    }
 	return;
 }
 
 void syscallExec(struct TrapFrame *tf) {
 	// TODO in lab3
 	// hint: ret = loadElf(tmp, (current + 1) * 0x100000, &entry);
-    const char* tmp = (char *)tf->ecx;
+    char* tmp = (char *)tf->ecx;
+    char filename[100]={'\0'};
+    int sel = tf->ds;
+    asm volatile("movw %0, %%es"::"m"(sel));
+    int i=0;
+    char ch;
+    while(*(tmp+i))
+    {
+        asm volatile("movb %%es:(%1), %0":"=r"(ch):"r"(tmp+i));
+        filename[i]=ch;
+        i++;
+    }
+    //putChar(filename[0]);
     uint32_t entry = 0;
-    uint32_t ret = loadElf(tmp, (current + 1) * 0x100000, &entry);
+    uint32_t ret = loadElf(filename, (current + 1) * 0x100000, &entry);
     if(ret == -1)
         return;
     tf -> eip = entry;
