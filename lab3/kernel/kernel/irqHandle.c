@@ -1,5 +1,7 @@
 #include "x86.h"
 #include "device.h"
+#include "lib.h"
+#include "types.h"
 
 extern TSS tss;
 extern ProcessTable pcb[MAX_PCB_NUM];
@@ -271,23 +273,28 @@ void syscallExec(struct TrapFrame *tf)
 {
 	// TODO in lab3
 	// hint: ret = loadElf(tmp, (current + 1) * 0x100000, &entry);
-	char *tmp = (char *)tf->ecx;
+	//printf("in syscallExec\n");
+	char *str = (char *)tf->ecx;
+	uint32_t len=tf->ebx;
+	//printf("len = %d\n",len);
 	char filename[100] = {'\0'};
 	int sel = tf->ds;
 	asm volatile("movw %0, %%es" ::"m"(sel));
 	int i = 0;
 	char ch;
-	while (*(tmp + i))
+	for(;i<len;i++)
 	{
 		asm volatile("movb %%es:(%1), %0"
 					 : "=r"(ch)
-					 : "r"(tmp + i));
+					 : "r"(str + i));
+		//printf("%d %c\n",i,ch);
 		filename[i] = ch;
-		i++;
 	}
+	//printf("111\n");
 	//putChar(filename[0]);
 	uint32_t entry = 0;
 	uint32_t ret = loadElf(filename, (current + 1) * 0x100000, &entry);
+	printf("result of loadElf %d\n",ret);
 	if (ret == -1)
 		return;
 	tf->eip = entry;

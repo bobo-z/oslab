@@ -231,22 +231,24 @@ int str2Str(char *string, char *buffer, int size, int count) {
 	return count;
 }
 
-pid_t fork() {
+int fork() {
 	// TODO in lab3
     return syscall(SYS_FORK, 0, 0, 0, 0, 0);
 }
 
 int exec(const char *filename, char * const argv[]) {
 	// TODO in lab3
-	const char* tmp = filename;
+	printf("in exec");
+	const char *tmp = filename;
 	uint32_t len=0;
-	while(*tmp!='\0')
-		{
-			len++;
-			tmp++;
-		}
-	printf("len=%d\n",len);
-    return syscall(SYS_EXEC, (uint32_t)filename,(uint32_t)argv,len,0,0);
+	while(*tmp++)
+	{
+		len++;
+		printf("len = %d\n",len);
+		//tmp++;
+	}
+	printf("syscallexec");
+    return syscall(2, (uint32_t)filename,(uint32_t)argv,len,0,0);
 }
 
 int sleep(uint32_t time) {

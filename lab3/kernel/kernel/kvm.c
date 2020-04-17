@@ -73,7 +73,7 @@ int loadElf(const char *filename, uint32_t physAddr, uint32_t *entry) {
     int i = 0;
     uint32_t phoff = 0x0;
     uint32_t offset = 0x0;
-    uint32_t elf = physAddr;
+    uint32_t elf = 0x0;
     Inode inode;
     int inodeOffset = 0;
 
@@ -85,11 +85,11 @@ int loadElf(const char *filename, uint32_t physAddr, uint32_t *entry) {
     *entry = ((struct ELFHeader *)elf)->entry;
     phoff = ((struct ELFHeader *)elf)->phoff;
     offset = ((struct ProgramHeader *)(elf+phoff))->off;
-    struct ProgramHeader* ph = (struct ProgramHeader *)(elf+phoff);
+    struct ProgramHeader* ph = (struct ProgramHeader *)(phoff);
     for(i=0;i<ph->memsz;i++)
-        *(uint8_t *)(physAddr + ph->vaddr + i)=*(uint8_t *)(elf + i + offset);
+        *(uint8_t *)(ph->vaddr + i)=*(uint8_t *)(elf + i + offset);
     for(i=ph->filesz;i<ph->memsz;i++)
-       *(uint8_t*)(physAddr + ph->vaddr + i)=0;
+       *(uint8_t*)(ph->vaddr + i)=0;
 	return 0;
 }
 
