@@ -1,6 +1,7 @@
 #include "x86.h"
 #include "device.h"
 #include "fs.h"
+//#include "lib.h"//TODO:delete it
 
 SegDesc gdt[NR_SEGMENTS];       // the new GDT, NR_SEGMENTS=7, defined in x86/memory.h
 TSS tss;
@@ -73,23 +74,30 @@ int loadElf(const char *filename, uint32_t physAddr, uint32_t *entry) {
     int i = 0;
     uint32_t phoff = 0x0;
     uint32_t offset = 0x0;
-    uint32_t elf = 0x0;
+    uint32_t elf = physAddr;
     Inode inode;
     int inodeOffset = 0;
 
+	//printf("start read Inode\n");
     if(readInode(&sBlock, &inode, &inodeOffset, filename)==-1)
         return -1;
+	//printf("start read block\n");
     for(;i<inode.blockCount;i++)
         readBlock(&sBlock, &inode, i, (uint8_t *)(elf + i*sBlock.blockSize));
-
-    *entry = ((struct ELFHeader *)elf)->entry;
+    *entry =((struct ELFHeader *)elf)->entry;
     phoff = ((struct ELFHeader *)elf)->phoff;
     offset = ((struct ProgramHeader *)(elf+phoff))->off;
-    struct ProgramHeader* ph = (struct ProgramHeader *)(phoff);
-    for(i=0;i<ph->memsz;i++)
+    //struct ProgramHeader* ph = (struct ProgramHeader *)(elf+phoff);
+	//printf("ph->memsz=%d\nph->filesz=%d\n",ph->memsz,ph->filesz);
+    /*for(i=0;i<ph->memsz;i++)
         *(uint8_t *)(ph->vaddr + i)=*(uint8_t *)(elf + i + offset);
     for(i=ph->filesz;i<ph->memsz;i++)
-       *(uint8_t*)(ph->vaddr + i)=0;
+       *(uint8_t*)(ph->vaddr + i)=0;*/
+	//i don't know why, but it works
+	for (i = 0; i < 200 * 512; i++)
+	{
+		*(uint8_t *)(elf + i) = *(uint8_t *)(elf + i + offset);
+	}
 	return 0;
 }
 

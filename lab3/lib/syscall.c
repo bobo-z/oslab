@@ -245,7 +245,7 @@ int exec(const char *filename, char * const argv[]) {
 			len++;
 			tmp++;
 		}
-	printf("len=%d\n",len);
+	//printf("len=%d\n",len);
     return syscall(SYS_EXEC, (uint32_t)filename,(uint32_t)argv,len,0,0);
 }
 

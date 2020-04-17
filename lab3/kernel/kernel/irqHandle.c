@@ -1,7 +1,7 @@
 #include "x86.h"
 #include "device.h"
-#include "lib.h"
-#include "types.h"
+//#include "lib.h"
+//#include "types.h"//TODO:delete these
 
 extern TSS tss;
 extern ProcessTable pcb[MAX_PCB_NUM];
@@ -216,6 +216,7 @@ void syscallFork(struct TrapFrame *tf)
 {
 	// TODO in lab3
 	int i, j;
+	//find empty space
 	for (i = 0; i < MAX_PCB_NUM; i++)
 		if (pcb[i].state == STATE_DEAD)
 			break;
@@ -282,7 +283,7 @@ void syscallExec(struct TrapFrame *tf)
 	asm volatile("movw %0, %%es" ::"m"(sel));
 	int i = 0;
 	char ch;
-	for(;i<len;i++)
+	for(;i<=len;i++)
 	{
 		asm volatile("movb %%es:(%1), %0"
 					 : "=r"(ch)
@@ -290,11 +291,12 @@ void syscallExec(struct TrapFrame *tf)
 		//printf("%d %c\n",i,ch);
 		filename[i] = ch;
 	}
-	//printf("111\n");
+	//printf("%s\n",filename);
 	//putChar(filename[0]);
 	uint32_t entry = 0;
 	uint32_t ret = loadElf(filename, (current + 1) * 0x100000, &entry);
-	printf("result of loadElf %d\n",ret);
+	//printf("result of loadElf %d\nentry = %d\n",ret,entry);
+	//while(1);
 	if (ret == -1)
 		return;
 	tf->eip = entry;
