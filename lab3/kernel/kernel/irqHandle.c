@@ -221,11 +221,14 @@ void syscallFork(struct TrapFrame *tf)
 		if (pcb[i].state == STATE_DEAD)
 			break;
 	if (i != MAX_PCB_NUM)
-	{
+	{	
+//		enableInterrupt();
 		for (j = 0; j < 0x100000; j++)
 		{
 			*(uint8_t *)(j + (i + 1) * 0x100000) = *(uint8_t *)(j + (current + 1) * 0x100000);
+//			asm volatile("int $0x20");
 		}
+//		disableInterrupt();
 		pcb[i].stackTop = (uint32_t) & (pcb[i].regs);
 		pcb[i].prevStackTop = (uint32_t) & (pcb[i].stackTop);
 		pcb[i].state = STATE_RUNNABLE;
